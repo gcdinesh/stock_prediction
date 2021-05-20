@@ -8,7 +8,7 @@ from matplotlib.pylab import rcParams
 
 rcParams['figure.figsize'] = 20,10
 
-df = pd.read_csv('C:/Users/dchandra/Downloads/Mine/Study/Projects/stock_predict/tataglobal.csv')
+df = pd.read_csv('C:/Users/dchandra/Downloads/Mine/Study/Projects/stock_prediction/tataglobal.csv')
 df.index = df['Date']
 print(df.head())
 
