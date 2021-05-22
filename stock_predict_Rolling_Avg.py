@@ -13,7 +13,6 @@ rcParams['figure.figsize'] = 20,10
 df = pd.read_csv('C:/Users/dchandra/Downloads/Mine/Study/Projects/stock_prediction/tataglobal.csv')
 df = df.sort_values('Date')
 df.index = df['Date']
-mplcursors.cursor(hover=True)
 
 class RollingAverage(object):
     
