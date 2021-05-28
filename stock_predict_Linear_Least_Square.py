@@ -11,14 +11,27 @@ from fastai.tabular.all import add_datepart
 
 rcParams['figure.figsize'] = 20,10
 
-df1 = pd.read_csv('C:/Users/dchandra/Downloads/Mine/Study/Projects/stock_prediction/tataglobal.csv')
+df1 = pd.read_csv('C:/Users/dchandra/Downloads/Mine/Study/Projects/stock_prediction/ADANITRANS.BO.csv')
 df = DataFrame(df1)
 df = df.sort_values('Date')
 df.index = df['Date']
-df = add_datepart(df, 'Date')
-df = df[['Dayofweek', 'Close']]
-actualVals = df['Close'].tolist()
-actualDayOfWeekVals = df['Dayofweek']
+df = add_datepart(df, 'Date', drop = False)
+"""
+df = df.drop(['Open', 'High', 'Low', 'Elapsed', 'Is_month_end', 'Adj Close', 'Volume',
+'Is_month_start',
+'Is_quarter_end',
+'Is_quarter_start',
+'Is_year_end',
+'Is_year_start'], axis = 1)
+"""
+df = df.drop(['Open', 'High', 'Low', 'Elapsed', 'Adj Close', 'Volume',
+'Is_month_end',
+'Is_month_start',              
+'Is_quarter_end',
+'Is_quarter_start',
+'Is_year_end',
+'Is_year_start'], axis = 1)
+print(df)
 
 
 class LinearFromSklearn(object):
@@ -26,10 +39,11 @@ class LinearFromSklearn(object):
         self.new_data = new_data
         
     def calculateFromSklearn(self):
+        length = 1000
         self.new_data = add_datepart(self.new_data, 'Date')
         self.new_data.drop('Elapsed', axis=1, inplace=True)
-        train = self.new_data[:987]
-        valid = DataFrame(self.new_data[987:])
+        train = self.new_data[:length]
+        valid = DataFrame(self.new_data[length:])
         
         x_train = train.drop('Close', axis=1)
         y_train = train['Close']
@@ -50,12 +64,12 @@ class LinearFromSklearn(object):
         valid['Predictions'] = 0
         valid['Predictions'] = preds
         
-        valid.index = self.new_data[987:].index
-        train.index = self.new_data[:987].index
+        valid.index = self.new_data[length:].index
+        train.index = self.new_data[:length].index
         
-        plt.plot(train['Close'])
-        plt.plot(valid[['Close', 'Predictions']])
+        plt.plot(train['Close'].append(valid['Close']))
+        plt.plot(valid[['Predictions']])
 
 
-ravg = LinearFromSklearn(df1)
+ravg = LinearFromSklearn(df)
 ravg.calculateFromSklearn()

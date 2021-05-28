@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.pylab import rcParams
 from pandas import DataFrame
 from fastai.tabular.all import add_datepart
+import math
 #%matplotlib inline
 # use %matplotlib qt instead of inline to visualize and hover the graph, but it is too slow
 #instead of using this command here go to tools-> preferences -> ipython console -> graphics -> backend(dropdown) to inline
@@ -24,7 +25,8 @@ df.reset_index(drop = True, inplace=True)
 #'Is_year_end',
 #'Is_year_start'], axis = 1)
 
-df = df.drop(['Open', 'High', 'Low', 'Elapsed', 'Is_month_end', 'Adj Close', 'Volume',
+df = df.drop(['Open', 'High', 'Low', 'Elapsed', 'Adj Close', 'Volume',
+'Is_month_end',
 'Is_month_start',
 'Is_quarter_end',
 'Is_quarter_start',
@@ -56,13 +58,14 @@ class Linear(object):
         #biasDerivative = 0.0
         
         for i in range(len(df)):
-            weightDOWDerivative += (-2 * df['Dayofweek'][i] * (df['Close'][i] - self.weightDOWDerivative * df['Dayofweek'][i] - self.bias))
-            weightYearDerivative += (-2 * df['Year'][i] * (df['Close'][i] - self.weightYearDerivative * df['Year'][i] - self.bias))
-            weightMonthDerivative += (-2 * df['Month'][i] * (df['Close'][i] - self.weightMonthDerivative * df['Month'][i] - self.bias))
-            weightWeekDerivative+= (-2 * df['Week'][i] * (df['Close'][i] - self.weightWeekDerivative * df['Week'][i] - self.bias))
-            weightDayDerivative += (-2 * df['Day'][i] * (df['Close'][i] - self.weightDayDerivative * df['Day'][i] - self.bias))
-            weightDayofyearDerivative += (-2 * df['Dayofyear'][i] * (df['Close'][i] - self.weightDayofyearDerivative * df['Dayofyear'][i] - self.bias))
-            #biasDerivative += -2 * (df['Close'][i] - self.weight * df['Dayofweek'][i] - self.bias)
+            if(math.isnan(df['Close'][i]) == False):
+                weightDOWDerivative += (-2 * df['Dayofweek'][i] * (df['Close'][i] - self.weightDOWDerivative * df['Dayofweek'][i] - self.bias))
+                weightYearDerivative += (-2 * df['Year'][i] * (df['Close'][i] - self.weightYearDerivative * df['Year'][i] - self.bias))
+                weightMonthDerivative += (-2 * df['Month'][i] * (df['Close'][i] - self.weightMonthDerivative * df['Month'][i] - self.bias))
+                weightWeekDerivative+= (-2 * df['Week'][i] * (df['Close'][i] - self.weightWeekDerivative * df['Week'][i] - self.bias))
+                weightDayDerivative += (-2 * df['Day'][i] * (df['Close'][i] - self.weightDayDerivative * df['Day'][i] - self.bias))
+                weightDayofyearDerivative += (-2 * df['Dayofyear'][i] * (df['Close'][i] - self.weightDayofyearDerivative * df['Dayofyear'][i] - self.bias))
+                #biasDerivative += -2 * (df['Close'][i] - self.weight * df['Dayofweek'][i] - self.bias)
                    
         self.weightDOWDerivative -= (weightDOWDerivative / len(df)) * self.lr
         self.weightYearDerivative -= (weightYearDerivative / len(df)) * self.lr
@@ -76,21 +79,28 @@ class Linear(object):
         for i in df:
             df[i] -= np.min(df[i])
             minMax = np.max(df[i]) - np.min(df[i])
-            df[i] /= minMax
+            if(minMax != 0):
+                df[i] /= minMax
     
     def calculateCost(self):
-        cost = 0.0
+        cost1,cost2,cost3,cost4,cost5,cost6 = 0.0,0.0,0.0,0.0,0.0,0.0
         for i in range(len(df)):
-            cost += (df['Close'][i] - (self.weight * df['Dayofweek'][i] + self.bias)) * (df['Close'][i] - (self.weight * df['Dayofweek'][i] + self.bias))
+            if(math.isnan(df['Close'][i]) == False):
+                cost1 += (df['Close'][i] - (self.weightDOWDerivative * df['Dayofweek'][i] + self.bias)) * (df['Close'][i] - (self.weightDOWDerivative * df['Dayofweek'][i] + self.bias))
+                cost2 += (df['Close'][i] - (self.weightYearDerivative * df['Year'][i] + self.bias)) * (df['Close'][i] - (self.weightYearDerivative * df['Year'][i] + self.bias))
+                cost3 += (df['Close'][i] - (self.weightMonthDerivative * df['Month'][i] + self.bias)) * (df['Close'][i] - (self.weightMonthDerivative * df['Month'][i] + self.bias))
+                cost4 += (df['Close'][i] - (self.weightWeekDerivative * df['Week'][i] + self.bias)) * (df['Close'][i] - (self.weightWeekDerivative * df['Week'][i] + self.bias))
+                cost5 += (df['Close'][i] - (self.weightDayDerivative * df['Day'][i] + self.bias)) * (df['Close'][i] - (self.weightDayDerivative * df['Day'][i] + self.bias))
+                cost6 += (df['Close'][i] - (self.weightDayofyearDerivative * df['Dayofyear'][i] + self.bias)) * (df['Close'][i] - (self.weightDayofyearDerivative * df['Dayofyear'][i] + self.bias))
             
-        return cost / len(df)
+        return (cost1 / len(df), cost2 / len(df), cost3 / len(df), cost4 / len(df), cost5 / len(df), cost6 / len(df))
     
     def train(self):
         for i in range(self.n):
             self.updatedWeightAndBias()
-            cost = 0
-            self.costList.append(np.sqrt(cost))
-            print("DOW={:.2f} y={:.2f} m={:.2f} w={:.2f} day={:.2f} DOY={:.2f} bias={:.2f} cost={:.2f}"
+            cost = self.calculateCost()
+            #self.costList.append(np.sqrt(cost))
+            print("DOW={:.2f} y={:.2f} m={:.2f} w={:.2f} day={:.2f} DOY={:.2f} bias={:.2f} cost={}"
                   .format(self.weightDOWDerivative, self.weightYearDerivative, self.weightMonthDerivative, self.weightWeekDerivative,
                           self.weightDayDerivative, self.weightDayofyearDerivative, self.bias, np.sqrt(cost)))
         
@@ -114,14 +124,14 @@ class Linear(object):
             self.predictVals.append(predlist[i])
             
     def plotGraph(self):
-        plt.plot(self.costList)
+        #plt.plot(self.costList)
         plt.show()
         plt.plot(actualVals)
         plt.plot(self.predictVals)
         plt.show()
 
 trainDataLen = 1000
-ravg = Linear(0.05, 100, trainDataLen)
+ravg = Linear(0.9, 10, trainDataLen)
 ravg.normalize()
 actualVals = df['Close'].tolist()
 df2 = DataFrame(df)
