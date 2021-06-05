@@ -11,7 +11,7 @@ from fastai.tabular.all import add_datepart
 
 rcParams['figure.figsize'] = 20,10
 
-df = pd.read_csv('C:/Users/dchandra/Downloads/Mine/Study/Projects/stock_prediction/ADANITRANS.BO.csv')
+df = pd.read_csv('C:/Users/dchandra/Downloads/Mine/Study/Projects/stock_prediction/ITC.BO.csv')
 df = df.sort_values('Date')
 
 
@@ -145,7 +145,7 @@ class LinearUsingSVD(object):
         self.new_data = new_data
         
     def calculate(self):
-        length = 1000
+        length = 5000
         self.new_data = add_datepart(self.new_data, 'Date')
         self.new_data.drop(['Open', 'High', 'Low', 'Elapsed', 'Adj Close', 'Volume', 'Is_month_end',
         'Is_month_start',              
@@ -184,11 +184,11 @@ class LinearUsingSVD(object):
         
         #make predictions and find the rmse
         predlist = list()
-        for i in range(1000, 1000 + len(x_valid)):
+        for i in range(length, length + len(x_valid)):
             c = 0
             predval = 0.0
             for f in x_valid:
-                predval += weight[c] * x_valid[f][i] + 28 #this bias was adjusted need to check how actually the data was preprocessed in sklearn
+                predval += weight[c] * x_valid[f][i] + 16 #this bias was adjusted need to check how actually the data was preprocessed in sklearn
                 c += 1
             predlist.append(predval)
         
